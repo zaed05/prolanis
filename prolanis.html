@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Prolanis – Puskesmas Srondol</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:light;--teal:#2aa58f;--dark:#1f8b78;--bg:#f7fbfa;--card:#ecf7f3;--line:#cfe3dd;--strong:#9cc7bc;--text:#3a4a50;--muted:#6b7b80;--red:#c0504d}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;display:flex;flex-direction:column;font-family:'Poppins',system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:.85rem}
+  :focus-visible{outline:2px solid #f2b84b;outline-offset:-2px}
+  header{background:linear-gradient(100deg,var(--dark),var(--teal) 60%,#9fdcc7);color:#fff;padding:.7rem 1rem;display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap}
+  header h1{margin:0;font-size:1.3rem;font-weight:600}
+  header span{font-size:.8rem;opacity:.95}
+  .bar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.6rem 1rem;background:#fff;border-bottom:1px solid var(--line)}
+  .bar input{font:inherit;padding:.4rem .6rem;border:1px solid #bcd6cf;border-radius:6px;background:#fff;color:var(--text);min-width:240px}
+  .btn{font:inherit;background:var(--teal);color:#fff;border:0;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-weight:500}
+  .btn:hover{background:var(--dark)}
+  .btn.alt{background:#fff;color:var(--dark);border:1px solid var(--teal)}
+  .btn.alt:hover{background:var(--card)}
+  .thn-label{display:flex;align-items:center;gap:.4rem;font-weight:500;color:var(--dark)}
+  .bar select{font:inherit;padding:.4rem .6rem;border:1px solid #bcd6cf;border-radius:6px;background:#fff;color:var(--text)}
+  .count{color:var(--muted);margin-left:auto}
+  .sheet{flex:1;overflow:auto;background:#fff}
+  table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+  th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;white-space:nowrap;overflow:hidden}
+  th{background:var(--card);color:var(--dark);font-weight:600;text-align:center;position:sticky;z-index:2;height:34px}
+  thead tr:first-child th{top:0}
+  thead tr:nth-child(2) th{top:34px;font-weight:500}
+  th.fix{vertical-align:middle}
+  th.bulan{border-bottom:1px solid var(--strong)}
+  .mulai{border-left:2px solid var(--strong)}
+  .no{background:var(--card);color:var(--muted);text-align:center;position:sticky;left:0;z-index:1}
+  th.no{z-index:4}
+  .nm{position:sticky;left:42px;z-index:1;background:#fff;box-shadow:2px 0 0 var(--line)}
+  th.nm{background:var(--card);z-index:4}
+  td input{width:100%;border:0;background:transparent;font:inherit;color:var(--text);padding:.4rem .5rem;border-radius:0}
+  td.mid input{text-align:center}
+  td input:focus{background:#fffbea}
+  tbody tr:hover td:not(.no){background:#f4fbf8}
+  tbody tr td.tb-tinggi, tbody tr:hover td.tb-tinggi{background:#f6a9a5}
+  tbody tr td.tb-pra,    tbody tr:hover td.tb-pra{background:#ffd8a6}
+  tbody tr td.tb-rendah, tbody tr:hover td.tb-rendah{background:#fff0a0}
+  .legend{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;align-items:center;padding:.4rem 1rem;background:#fff;border-bottom:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #c5d8d2;vertical-align:-3px;margin-right:.35rem}
+  @keyframes sorot{from{background:#cdeee3}to{background:transparent}}
+  tr.pindah td:not(.no){animation:sorot 1.6s ease-out}
+  @media (prefers-reduced-motion:reduce){tr.pindah td:not(.no){animation:none}}
+  td.act{text-align:center;padding:.2rem}
+  .del{background:none;border:0;color:var(--red);cursor:pointer;font-size:1rem;line-height:1;padding:.2rem .35rem}
+  .del:hover{background:#fdecec;border-radius:4px}
+  footer{padding:.4rem 1rem;font-size:.75rem;color:var(--muted);background:#fff;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prolanis</h1>
+  <span>Puskesmas Srondol, Kota Semarang – Tahun <span id="thn">2026</span></span>
+</header>
+
+<div class="bar">
+  <label class="thn-label">Tahun
+    <select id="tahun" aria-label="Pilih tahun"></select>
+  </label>
+  <button class="btn alt" id="tambahTahun" type="button">+ Tambah tahun</button>
+  <button class="btn" id="tambah" type="button">+ Tambah baris</button>
+  <input type="search" id="cari" placeholder="Cari nama, No HP, diagnosis, alamat" aria-label="Cari peserta">
+  <button class="btn alt" id="pdf" type="button">Unduh PDF</button>
+  <span class="count" id="jumlah"></span>
+</div>
+
+<div class="legend" aria-label="Keterangan warna tekanan darah">
+  <b>Warna kolom td:</b>
+  <span><i style="background:#f6a9a5"></i>Tinggi / hipertensi (sistolik ≥ 140 atau diastolik ≥ 90)</span>
+  <span><i style="background:#ffd8a6"></i>Normal tinggi (120–139 / 80–89)</span>
+  <span><i style="background:#fff0a0"></i>Rendah (sistolik &lt; 90 atau diastolik &lt; 60)</span>
+  <span><i style="background:#fff"></i>Normal (di bawah 120/80)</span>
+</div>
+
+<div class="sheet">
+  <table id="tabel">
+    <colgroup id="kolom"></colgroup>
+    <thead id="kepala"></thead>
+    <tbody id="isi"></tbody>
+  </table>
+</div>
+
+<footer>td = tekanan darah (mmHg, mis. 120/80), bb = berat badan (kg). Klik sel lalu ketik, perubahan tersimpan otomatis di browser ini. Setelah nama diisi, baris otomatis pindah sesuai urutan abjad. Kolom td diwarnai otomatis menurut tekanan darah (isi dengan format 120/80). Setiap tahun punya tabel sendiri, pilih tahun di bagian atas. Panah atas/bawah dan Enter berpindah baris. Data dari Excel bisa ditempel (paste). Unduh PDF untuk arsip atau dicetak (butuh koneksi internet saat pertama dibuka). Data peserta bersifat rahasia.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+const KEY = "prolanis_srondol_v2";
+const KEY_LAMA = "prolanis_ngaliyan_2026"; // data versi sebelumnya, dipindah ke tahun 2026
+const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const MULAI = 0; // 0 = Januari. Ubah ke 3 jika tabel ingin dimulai dari April
+
+const COLS = [
+  {k:"nama",     h:"Nama",      t:"text", w:200},
+  {k:"lahir",    h:"Tgl Lahir", t:"date", w:140},
+  {k:"hp",       h:"No HP",     t:"text", w:130},
+  {k:"diagnosis",h:"Diagnosis", t:"text", w:160},
+  {k:"alamat",   h:"Alamat",    t:"text", w:240}
+];
+for (let i = MULAI; i < 12; i++) {
+  COLS.push({k:"m"+i+"_td", h:"td", t:"text", w:90, bulan:BULAN[i], awal:true, mid:true});
+  COLS.push({k:"m"+i+"_bb", h:"bb", t:"text", w:70, bulan:BULAN[i], mid:true});
+}
+
+// Batas tekanan darah (mmHg). Ubah angka di sini bila pedoman berubah.
+const BATAS = {rendahSis:90, rendahDia:60, praSis:120, praDia:80, tinggiSis:140, tinggiDia:90};
+const WARNA_PDF = {tinggi:[246,169,165], pra:[255,216,166], rendah:[255,240,160]};
+const NAMA_KELAS = {tinggi:"Tinggi (hipertensi)", pra:"Normal tinggi", rendah:"Rendah", normal:"Normal"};
+
+// Membaca isian "120/80" (juga "120-80" atau "120 80"). Hasil null jika formatnya belum lengkap.
+function bacaTD(teks){
+  const m = String(teks || "").match(/^\s*(\d{2,3})\s*[\/\\\-\s]\s*(\d{2,3})\s*$/);
+  return m ? {sis:+m[1], dia:+m[2]} : null;
+}
+function klasifikasi(teks){
+  const v = bacaTD(teks); if (!v) return null;
+  if (v.sis >= BATAS.tinggiSis || v.dia >= BATAS.tinggiDia) return "tinggi";
+  if (v.sis < BATAS.rendahSis || v.dia < BATAS.rendahDia) return "rendah";
+  if (v.sis >= BATAS.praSis || v.dia >= BATAS.praDia) return "pra";
+  return "normal";
+}
+function tandai(td, teks){
+  td.classList.remove("tb-tinggi","tb-pra","tb-rendah");
+  const k = klasifikasi(teks);
+  if (k && k !== "normal") td.classList.add("tb-" + k);
+  td.title = k ? NAMA_KELAS[k] : "";
+}
+
+let semua = {};   // {"2026":[baris...], "2027":[...]}
+let tahun = 2026;
+try {
+  const tersimpan = JSON.parse(localStorage.getItem(KEY));
+  if (tersimpan && tersimpan.data) { semua = tersimpan.data; tahun = Number(tersimpan.aktif); }
+  else { const lama = JSON.parse(localStorage.getItem(KEY_LAMA)); if (Array.isArray(lama) && lama.length) semua["2026"] = lama; }
+} catch(e) {}
+if (!Object.keys(semua).length) semua["2026"] = [];
+if (!semua[tahun]) tahun = Math.max(...Object.keys(semua).map(Number));
+let data = semua[tahun];
+const simpan = () => { semua[tahun] = data; try { localStorage.setItem(KEY, JSON.stringify({aktif:tahun, data:semua})); } catch(e) {} };
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const barisBaru = () => ({id:newId()});
+const isi = document.getElementById("isi");
+
+function buatKepala(){
+  const lebar = 42 + COLS.reduce((a,c) => a + c.w, 0) + 40;
+  document.getElementById("tabel").style.width = lebar + "px";
+  const cg = document.getElementById("kolom");
+  [42, ...COLS.map(c => c.w), 40].forEach(w => { const c = document.createElement("col"); c.style.width = w + "px"; cg.append(c); });
+
+  const h = document.getElementById("kepala");
+  const r1 = document.createElement("tr"), r2 = document.createElement("tr");
+  const th = (txt, cls, extra={}) => { const e = document.createElement("th"); e.textContent = txt; e.className = cls || ""; Object.assign(e, extra); return e; };
+  r1.append(th("No", "no fix", {rowSpan:2}));
+  COLS.slice(0,5).forEach((c,i) => r1.append(th(c.h, "fix" + (i === 0 ? " nm" : ""), {rowSpan:2})));
+  for (let i = MULAI; i < 12; i++) r1.append(th(BULAN[i], "bulan mulai", {colSpan:2}));
+  r1.append(th("", "fix", {rowSpan:2}));
+  COLS.slice(5).forEach(c => r2.append(th(c.h, c.awal ? "mulai" : "")));
+  h.append(r1, r2);
+}
+
+function buatBaris(row){
+  const tr = document.createElement("tr"); tr.dataset.id = row.id;
+  const no = document.createElement("td"); no.className = "no"; tr.append(no);
+  COLS.forEach((c, i) => {
+    const td = document.createElement("td");
+    td.className = (i === 0 ? "nm " : "") + (c.awal ? "mulai " : "") + (c.mid ? "mid" : "");
+    const el = document.createElement("input"); el.type = c.t; el.value = row[c.k] || ""; el.dataset.k = c.k;
+    el.setAttribute("aria-label", c.bulan ? c.bulan + " " + c.h : c.h);
+    if (c.k === "hp") el.inputMode = "tel";
+    td.append(el); tr.append(td);
+    if (c.k.endsWith("_td")) tandai(td, el.value);
+  });
+  const ta = document.createElement("td"); ta.className = "act";
+  const b = document.createElement("button"); b.className = "del"; b.type = "button"; b.title = "Hapus baris"; b.setAttribute("aria-label","Hapus baris"); b.textContent = "✕";
+  ta.append(b); tr.append(ta);
+  return tr;
+}
+
+// Urutan abjad berdasarkan nama (tanpa membedakan huruf besar/kecil). Baris tanpa nama berada di paling bawah.
+const bandingkan = (a, b) => {
+  const x = (a.nama || "").trim(), y = (b.nama || "").trim();
+  if (!x && !y) return 0;
+  if (!x) return 1;
+  if (!y) return -1;
+  return x.localeCompare(y, "id", {sensitivity:"base"});
+};
+
+function render(){ data.sort(bandingkan); isi.replaceChildren(...data.map(buatBaris)); saring(); }
+
+// Susun ulang baris yang sudah tampil tanpa membangun ulang tabel
+function urutkanBaris(idBaris){
+  const aktif = document.activeElement;
+  const peta = new Map([...isi.rows].map(tr => [tr.dataset.id, tr]));
+  const sebelum = [...isi.rows].map(tr => tr.dataset.id).join();
+  data.sort(bandingkan);
+  if (data.map(d => d.id).join() === sebelum) return;
+  data.forEach(d => isi.append(peta.get(d.id)));
+  saring();
+  if (aktif && aktif.dataset && aktif.dataset.k && isi.contains(aktif)) aktif.focus({preventScroll:true});
+  const tr = peta.get(idBaris);
+  if (tr) {
+    tr.classList.remove("pindah"); void tr.offsetWidth; tr.classList.add("pindah");
+    tr.scrollIntoView({block:"nearest"});
+  }
+}
+
+function saring(){
+  const q = document.getElementById("cari").value.toLowerCase();
+  let tampil = 0;
+  [...isi.rows].forEach(tr => {
+    const d = data.find(x => x.id === tr.dataset.id) || {};
+    const cocok = !q || [d.nama, d.hp, d.diagnosis, d.alamat].join(" ").toLowerCase().includes(q);
+    tr.hidden = !cocok;
+    if (cocok) { tampil++; tr.cells[0].textContent = tampil; }
+  });
+  document.getElementById("jumlah").textContent = tampil + " dari " + data.length + " baris";
+}
+
+isi.addEventListener("input", e => {
+  const el = e.target, tr = el.closest("tr"); if (!tr || !el.dataset.k) return;
+  const d = data.find(x => x.id === tr.dataset.id); if (!d) return;
+  d[el.dataset.k] = el.value; simpan();
+  if (el.dataset.k.endsWith("_td")) tandai(el.parentElement, el.value);
+  if (document.getElementById("cari").value) saring();
+});
+// Urutkan setelah nama selesai diisi (saat pindah sel atau menekan Enter), bukan saat masih mengetik
+isi.addEventListener("change", e => {
+  const el = e.target; if (el.dataset.k !== "nama") return;
+  const id = el.closest("tr").dataset.id;
+  setTimeout(() => urutkanBaris(id), 0);
+});
+isi.addEventListener("click", e => {
+  const b = e.target.closest(".del"); if (!b) return;
+  const tr = b.closest("tr"), d = data.find(x => x.id === tr.dataset.id);
+  if (d && confirm("Hapus baris" + (d.nama ? " " + d.nama : "") + "?")) { data = data.filter(x => x !== d); simpan(); tr.remove(); saring(); }
+});
+isi.addEventListener("keydown", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.k) return;
+  if (!["ArrowUp","ArrowDown","Enter"].includes(e.key)) return;
+  e.preventDefault();
+  let tr = el.closest("tr"), ke = e.key === "ArrowUp" ? "previousElementSibling" : "nextElementSibling";
+  do { tr = tr[ke]; } while (tr && tr.hidden);
+  if (tr) { const t = tr.querySelector('[data-k="' + el.dataset.k + '"]'); if (t) t.focus(); }
+});
+isi.addEventListener("paste", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.k) return;
+  const teks = (e.clipboardData || window.clipboardData).getData("text");
+  if (!/[\t\n]/.test(teks.trim())) return;
+  e.preventDefault();
+  const baris = teks.replace(/\r/g,"").replace(/\n$/,"").split("\n").map(r => r.split("\t"));
+  const kol = COLS.findIndex(c => c.k === el.dataset.k);
+  const idx = data.findIndex(x => x.id === el.closest("tr").dataset.id);
+  baris.forEach((cells, i) => {
+    if (!data[idx + i]) data.push(barisBaru());
+    cells.forEach((v, j) => { const c = COLS[kol + j]; if (c) data[idx + i][c.k] = v.trim(); });
+  });
+  simpan(); render();
+});
+
+document.getElementById("tambah").onclick = () => {
+  const d = barisBaru(); data.push(d); simpan();
+  const tr = buatBaris(d); isi.append(tr); saring();
+  tr.scrollIntoView({block:"nearest"}); tr.querySelector('[data-k="nama"]').focus();
+};
+document.getElementById("cari").addEventListener("input", saring);
+
+document.getElementById("pdf").onclick = () => {
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert("Pustaka PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman."); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a3"});
+  const tglId = s => s ? s.split("-").reverse().join("/") : "";
+
+  // Lewati baris yang benar-benar kosong, kecuali semua baris kosong (untuk mencetak formulir kosong)
+  const terisi = data.filter(d => COLS.some(c => (d[c.k] || "").trim()));
+  const sumber = terisi.length ? terisi : data;
+
+  const baris1 = [{content:"No", rowSpan:2}, ...COLS.slice(0,5).map(c => ({content:c.h, rowSpan:2}))];
+  for (let i = MULAI; i < 12; i++) baris1.push({content:BULAN[i], colSpan:2});
+  const baris2 = COLS.slice(5).map(c => c.h);
+  const isiTabel = sumber.map((d, i) => [i + 1, ...COLS.map(c => c.k === "lahir" ? tglId(d.lahir) : (d[c.k] || ""))]);
+
+  const lebarTetap = {0:8, 1:36, 2:20, 3:24, 4:28, 5:46};
+  const gaya = {};
+  for (let i = 0; i < COLS.length + 1; i++) gaya[i] = i in lebarTetap ? {cellWidth:lebarTetap[i]} : {cellWidth:10.2, halign:"center"};
+  gaya[0].halign = "center";
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(31,139,120);
+  doc.text("Prolanis", 10, 12);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(80,90,95);
+  doc.text("Puskesmas Srondol, Kota Semarang - Tahun " + tahun, 10, 18);
+
+  doc.autoTable({
+    head: [baris1, baris2], body: isiTabel, startY: 22, margin: {left:10, right:10, bottom:18},
+    theme: "grid", columnStyles: gaya,
+    didParseCell: (hk) => {
+      if (hk.section !== "body") return;
+      const c = COLS[hk.column.index - 1];
+      if (c && c.k.endsWith("_td")) {
+        const kl = klasifikasi(hk.cell.raw);
+        if (kl && WARNA_PDF[kl]) hk.cell.styles.fillColor = WARNA_PDF[kl];
+      }
+    },
+    styles: {fontSize:6.5, cellPadding:1.2, lineColor:[170,200,192], lineWidth:0.15, textColor:[50,60,65], overflow:"linebreak"},
+    headStyles: {fillColor:[236,247,243], textColor:[31,139,120], halign:"center", valign:"middle", fontStyle:"bold"},
+    didDrawPage: () => {
+      const h = doc.internal.pageSize.getHeight(), w = doc.internal.pageSize.getWidth();
+      doc.setFontSize(7); doc.setTextColor(110,120,125);
+      let x = 10;
+      [["tinggi","Tinggi / hipertensi (>=140/90)"],["pra","Normal tinggi (120-139 / 80-89)"],["rendah","Rendah (<90/60)"]].forEach(([k, t]) => {
+        const [r, g, b] = WARNA_PDF[k];
+        doc.setFillColor(r, g, b); doc.setDrawColor(170,200,192); doc.rect(x, h - 13.6, 4, 3, "FD");
+        doc.setTextColor(80,90,95); doc.text(t, x + 5.5, h - 11.2);
+        x += 5.5 + doc.getTextWidth(t) + 8;
+      });
+      doc.setTextColor(110,120,125);
+      doc.text("td = tekanan darah (mmHg), bb = berat badan (kg). Dokumen rahasia, hanya untuk keperluan pelayanan.", 10, h - 6);
+      doc.text("Halaman " + doc.internal.getNumberOfPages(), w - 10, h - 6, {align:"right"});
+    }
+  });
+  doc.save("prolanis-srondol-" + tahun + ".pdf");
+};
+
+const selTahun = document.getElementById("tahun");
+function isiPilihanTahun(){
+  selTahun.replaceChildren();
+  Object.keys(semua).map(Number).sort((x, y) => x - y).forEach(t => {
+    const o = document.createElement("option"); o.value = t; o.textContent = t; selTahun.append(o);
+  });
+  selTahun.value = tahun;
+  document.getElementById("thn").textContent = tahun;
+}
+function gantiTahun(t){
+  simpan(); tahun = t;
+  data = semua[t] || (semua[t] = []);
+  if (!data.length) data = Array.from({length:12}, barisBaru);
+  simpan(); isiPilihanTahun();
+  document.getElementById("cari").value = "";
+  render();
+}
+selTahun.addEventListener("change", () => gantiTahun(Number(selTahun.value)));
+document.getElementById("tambahTahun").onclick = () => {
+  const tahunAda = Object.keys(semua).map(Number);
+  const usul = Math.max(...tahunAda) + 1;
+  const masuk = prompt("Masukkan tahun baru (contoh: " + usul + "):", usul);
+  if (masuk === null) return;
+  const t = parseInt(masuk, 10);
+  if (!(t >= 2000 && t <= 2100)) { alert("Tahun tidak valid. Isi angka antara 2000 dan 2100."); return; }
+  if (semua[t]) { alert("Tahun " + t + " sudah ada, tabelnya dibuka."); gantiTahun(t); return; }
+  const acuan = tahunAda.filter(y => y < t).sort((x, y) => y - x)[0];
+  let baru = [];
+  if (acuan !== undefined && semua[acuan].some(d => (d.nama || "").trim()) &&
+      confirm("Salin daftar peserta dari tahun " + acuan + " ke tahun " + t + "?\n(Data td dan bb tidak ikut disalin.)\n\nOK = salin peserta, Batal = tabel kosong")) {
+    baru = semua[acuan].filter(d => (d.nama || "").trim())
+      .map(d => ({id:newId(), nama:d.nama, lahir:d.lahir, hp:d.hp, diagnosis:d.diagnosis, alamat:d.alamat}));
+  }
+  semua[t] = baru;
+  gantiTahun(t);
+};
+
+buatKepala();
+if (!data.length) { data = Array.from({length:12}, barisBaru); simpan(); }
+isiPilihanTahun();
+render();
+</script>
+</body>
+</html>
